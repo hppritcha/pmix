@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <pmix.h>
 #include "examples.h"
@@ -255,6 +256,10 @@ int main(int argc, char **argv)
     PMIX_INFO_CONSTRUCT(&tinfo[1]);
     PMIX_INFO_LOAD(&tinfo[1], PMIX_TIMEOUT, &get_timeout, PMIX_UINT32);
 
+    bool already_tried = false;
+
+retry:
+
     for (n = 0; n < nprocs; n++) {
         proc.rank = n;
         if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_GROUP_LOCAL_CID, tinfo, 2, &val))) {
@@ -266,18 +271,26 @@ int main(int argc, char **argv)
            fprintf(stderr, "%s:%d: PMIx_Get LOCAL CID for rank %d returned wrong type: %s\n", myproc.nspace,
                     myproc.rank, n, PMIx_Data_type_string(val->type));
             PMIX_VALUE_RELEASE(val);
+            abort();
             continue;
         }
         if ((1234UL + (unsigned long)n) != val->data.size) {
             fprintf(stderr, "%s:%d: PMIx_Get LOCAL CID for rank %d returned wrong value: %s\n",
                     myproc.nspace, myproc.rank, n, PMIx_Value_string(val));
             PMIX_VALUE_RELEASE(val);
+            abort();
             continue;
         }
         fprintf(stderr, "%s:%d: PMIx_Get LOCAL CID for rank %u SUCCESS value: %s\n",
                 myproc.nspace, myproc.rank, n, PMIx_Value_string(val));
         PMIX_VALUE_RELEASE(val);
+        if (already_tried == false) {
+            already_tried = true;
+            fprintf(stderr, "TRYING TO GET CIDS A SECOND TIME\n");
+            goto retry;
+        }
     }
+    
 
 done:
     /* finalize us */

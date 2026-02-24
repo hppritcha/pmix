@@ -588,6 +588,7 @@ pmix_status_t pmix_gds_hash_store_qualified(pmix_hash_table_t *ht,
     PMIX_CONSTRUCT(&kv, pmix_kval_t);
     kv.key = iptr[0].key;
     kv.value = &iptr[0].value;
+    fprintf(stderr, "storing qualified value key %s \n", kv.key);
 
     nquals = sz - 1;
     PMIX_INFO_CREATE(quals, nquals);

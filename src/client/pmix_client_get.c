@@ -719,10 +719,16 @@ static pmix_status_t process_values(pmix_cb_t *cb)
     pmix_info_t *info;
     size_t ninfo, n;
 
+    fprintf(stderr, "process_values thinks list has %d and cb->key %s\n", pmix_list_get_size(kvs), cb->key);
     if (NULL != cb->key && 1 == pmix_list_get_size(kvs)) {
         kv = (pmix_kval_t *) pmix_list_get_first(kvs);
         cb->value = kv->value;
+        fprintf(stderr, "process values thinks type is of %d\n", kv->value->type);
+#if 0
+        PMIx_Value_xfer(&cb->value, kv->value);
+#endif
         kv->value = NULL; // protect the value
+        fprintf(stderr, "process_values using special on key path\n");
         return PMIX_SUCCESS;
     }
     /* we will return the data as an array of pmix_info_t

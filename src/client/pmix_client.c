@@ -1330,6 +1330,7 @@ static void _putfn(int sd, short args, void *cbdata)
     }
 
     /* store it */
+    fprintf(stderr, "storing key %s type %d \n", kv->key, kv->value->type);
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &pmix_globals.myid, cb->scope, kv);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);

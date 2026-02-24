@@ -570,6 +570,7 @@ pmix_status_t pmix_gds_hash_fetch(struct pmix_peer_t *pr,
         /* finally, we need the job-level info for each rank in the job */
         for (rnk = 0; rnk < trk->nptr->nprocs; rnk++) {
             PMIX_CONSTRUCT(&rkvs, pmix_list_t);
+            fprintf(stderr, "calling pmix_hash_fetch with internal table\n");
             rc = pmix_hash_fetch(&trk->internal, rnk, NULL, NULL, 0, &rkvs, NULL);
             if (PMIX_ERR_NOMEM == rc) {
                 PMIX_LIST_DESTRUCT(&rkvs);
@@ -641,6 +642,7 @@ pmix_status_t pmix_gds_hash_fetch(struct pmix_peer_t *pr,
                 PMIX_RANK_WILDCARD == proc->rank) {
                 /* need to check internal as we might have an older peer */
                 ht = &trk->internal;
+    fprintf(stderr, "pmix_hash_fetch doing doover\n");
                 goto doover;
             }
             return rc;
@@ -649,6 +651,7 @@ pmix_status_t pmix_gds_hash_fetch(struct pmix_peer_t *pr,
             if (PMIX_SUCCESS != rc && PMIX_RANK_WILDCARD == proc->rank) {
                 /* need to check internal as we might have an older peer */
                 ht = &trk->internal;
+    fprintf(stderr, "pmix_hash_fetch doing doover\n");
                 goto doover;
             }
             return rc;
@@ -713,21 +716,25 @@ doover:
         }
     } else {
         rc = pmix_hash_fetch(ht, proc->rank, key, qualifiers, nqual, kvs, NULL);
+        fprintf(stderr, "pmix_hash_fetch returned rc %d for key %s\n", rc, key);
     }
     if (PMIX_SUCCESS == rc) {
         if (NULL != key && PMIX_CHECK_RESERVED_KEY(key)) {
             // there is no need to check other scopes for
             // reserved keys
+            fprintf(stderr, "pmix_hash_fetch thinks this is a reserved key\n");
             return PMIX_SUCCESS;
         }
         if (PMIX_GLOBAL == scope) {
             if (ht == &trk->local) {
                 /* need to do this again for the remote data */
                 ht = &trk->remote;
+    fprintf(stderr, "pmix_hash_fetch doing doover\n");
                 goto doover;
             } else if (ht == &trk->internal) {
                 /* check local */
                 ht = &trk->local;
+    fprintf(stderr, "pmix_hash_fetch doing doover\n");
                goto doover;
             }
         }
@@ -736,10 +743,12 @@ doover:
             if (ht == &trk->internal) {
                 /* need to also try the local data */
                 ht = &trk->local;
+    fprintf(stderr, "pmix_hash_fetch doing doover\n");
                 goto doover;
             } else if (ht == &trk->local) {
                 /* need to also try the remote data */
                 ht = &trk->remote;
+    fprintf(stderr, "pmix_hash_fetch doing doover\n");
                 goto doover;
             }
         }
@@ -753,6 +762,7 @@ doover:
         if (PMIX_RANK_IS_VALID(proc->rank)) {
             if (PMIX_LOCAL == scope) {
                 /* check the remote scope */
+                fprintf(stderr, "calling pmix_hash_fetch with remote table\n");
                 rc = pmix_hash_fetch(&trk->remote, proc->rank, key, qualifiers, nqual, kvs, NULL);
                 if (PMIX_SUCCESS == rc || 0 < pmix_list_get_size(kvs)) {
                     while (NULL != (kv = (pmix_kval_t *) pmix_list_remove_first(kvs))) {
@@ -764,6 +774,7 @@ doover:
                 }
             } else if (PMIX_REMOTE == scope) {
                 /* check the local scope */
+                fprintf(stderr, "calling pmix_hash_fetch with local table\n");
                 rc = pmix_hash_fetch(&trk->local, proc->rank, key, qualifiers, nqual, kvs, NULL);
                 if (PMIX_SUCCESS == rc || 0 < pmix_list_get_size(kvs)) {
                     while (NULL != (kv = (pmix_kval_t *) pmix_list_remove_first(kvs))) {
@@ -785,6 +796,7 @@ doover:
         rc = PMIX_SUCCESS;
     }
 
+     fprintf(stderr, "pmix_gdb_hash_fetch returned %d\n", rc);
     return rc;
 }
 

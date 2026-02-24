@@ -327,6 +327,7 @@ void pmix_parse_localquery(int sd, short args, void *cbdata)
         /* see if we already have this info */
         for (p = 0; NULL != queries[n].keys[p]; p++) {
             cb.key = queries[n].keys[p];
+            fprintf(stderr, "checking about key %s\n", cb.key);
             // Locally resolvable keys
             if (0 == strcmp(queries[n].keys[p], PMIX_QUERY_STABLE_ABI_VERSION)) {
                 PMIX_KVAL_NEW(kv, cb.key);
@@ -350,6 +351,7 @@ void pmix_parse_localquery(int sd, short args, void *cbdata)
                 return;
 
             } else {
+                fprintf(stderr, "fetching from GDB KV\n");
                 PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
                 if (PMIX_SUCCESS == rc) {
                     /* need to retain this result */

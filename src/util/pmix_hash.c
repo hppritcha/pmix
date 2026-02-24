@@ -293,7 +293,11 @@ static pmix_status_t make_copy(pmix_regattr_input_t *p,
     pmix_info_t *iptr;
     size_t nq, m;
 
-    if (UINT32_MAX != hv->qualindex) {
+#if 0
+    if ((UINT32_MAX != hv->qualindex) && !PMIX_CHECK_RESERVED_KEY(p->string)) {
+#endif
+    if (UINT32_MAX != hv->qualindex){
+        pmix_output(0, "%s make_copy thinks this is a quallified value %s", PMIX_NAME_PRINT(&pmix_globals.myid), p->string);
         /* this is a qualified value - need to return it as such */
         PMIX_KVAL_NEW(kv, PMIX_QUALIFIED_VALUE);
         darray = (pmix_data_array_t*)pmix_pointer_array_get_item(proc_data->quals, hv->qualindex);
@@ -325,6 +329,7 @@ static pmix_status_t make_copy(pmix_regattr_input_t *p,
         kv->value->data.darray = darray;
         pmix_list_append(kvals, &kv->super);
     } else {
+        pmix_output(0, "%s make_copy thinks this is NOT a quallified value %s", PMIX_NAME_PRINT(&pmix_globals.myid), p->string);
         PMIX_KVAL_NEW(kv, p->string);
         PMIx_Value_xfer(kv->value, hv->value);
         pmix_list_append(kvals, &kv->super);
@@ -428,6 +433,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table,
                                         PMIX_RANK_PRINT(rank));
                         free(_tmp);
                     }
+                    fprintf(stderr, "calling make_copy at line %d\n",__LINE__);
                     rc = make_copy(p, hv, kvals, proc_data, keyindex);
                     if (PMIX_UNLIKELY(PMIX_SUCCESS != rc)) {
                         return rc;
@@ -437,8 +443,13 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table,
             return PMIX_SUCCESS;
         } else {
             /* find the value from within this data object */
+                pmix_output_verbose(10, pmix_gds_base_framework.framework_output,
+                                    "HASH:FETCH looking for key %s in data object keyindex %d", key, keyindex);
             hv = lookup_keyval(proc_data, kid, qualifiers, nquals, keyindex);
             if (NULL != hv) {
+                pmix_output_verbose(10, pmix_gds_base_framework.framework_output,
+                                    "HASH:FETCH found key %s in data object keyindex %d", key, keyindex);
+                fprintf(stderr, "calling make_copy at line %d\n",__LINE__);
                 rc = make_copy(p, hv, kvals, proc_data, keyindex);
                 break;
             } else if (!fullsearch) {

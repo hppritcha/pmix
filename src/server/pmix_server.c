@@ -2631,6 +2631,7 @@ static void _store_internal(int sd, short args, void *cbdata)
 
     pmix_strncpy(proc.nspace, cd->pname.nspace, PMIX_MAX_NSLEN);
     proc.rank = cd->pname.rank;
+    fprintf(stderr, "storing key %s \n", cd->kv->key);
     PMIX_GDS_STORE_KV(cd->status, pmix_globals.mypeer, &proc, PMIX_INTERNAL, cd->kv);
     PMIX_WAKEUP_THREAD(&cd->lock);
 }
